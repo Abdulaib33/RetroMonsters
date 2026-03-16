@@ -1,0 +1,954 @@
+app/Http/Controllers/MonsterController.php :
+
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Monster;
+use Illuminate\Http\Request;
+
+class MonsterController extends Controller
+{
+    /**
+     *  Home page: random monster + lastest monsters.
+     */
+
+     public function home() {
+        $randomMonster = Monster::inRandomOrder()->first();
+        $latestMonsters = Monster::orderByDesc('created_at')->take(9)->get();
+
+        return view('home', compact('randomMonster', 'latestMonsters'));
+     }
+
+    /**
+     * Display a listing of the resource.
+     * List page: 9 latest monsters.
+     */
+    public function index()
+    {
+        $monsters = Monster::orderByDesc('created_at')->take(9)->get();
+
+        return view('monsters.index', compact('monsters'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     * show create form
+     */
+    public function create()
+    {
+        return view('monsters.create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     * Store new monster
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+                'name' => 'required|max:255',
+                'type' => 'required|max:255',
+                'pv' => 'required|min:0',
+                'attack' => 'required|min:0',
+                'defense' => 'required|min:0',
+                'description' => 'nullable',
+                'image_url' => 'nullable'
+        ]);
+
+        $monster = Monster::create($validated);
+
+        return redirect()->route('monsters.show', $monster)->with('success', 'Monster created successfully');
+    }
+
+    /**
+     * Display the specified resource.
+     * Show one monster
+     */
+    public function show(Monster $monster)
+    {
+        return view('monsters.show', compact('monster'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     * show edit form
+     */
+    public function edit(Monster $monster)
+    {
+        return view('monsters.edit', compact('monster'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     * Update monster.
+     */
+    public function update(Request $request, Monster $monster)
+    {
+        $validated = $request->validate([
+            'name' => 'required|min:255',
+            'type' => 'required|min:255',
+            'pv' => 'required|min:0',
+            'attack' => 'required|min:0',
+            'defense' => 'required|min:0',
+            'description' => 'nullable',
+            'image_url' => 'nullable',
+        ]);
+
+        $monster->update($validated);
+
+        return redirect()->route('monsters.show', $monster)->with('success', 'Monster updated successfully');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Monster $monster)
+    {
+        $monster->delete();
+
+        return redirect()->route('monsters.index')->with('success', 'Monster deleted successfully');
+    }
+}
+
+
+
+app/Models/Monster.php :
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Monster extends Model
+{
+    protected $fillable = [
+        'name',
+        'type',
+        'pv',
+        'attack',
+        'defense',
+        'description',
+        'image_url', // bonus (optionnel)
+    ];
+}
+
+
+
+database/migrations/2026_01_30_223404_create_monsters_table.php :
+
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('monsters', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('type');
+            $table->integer('pv');
+            $table->integer('attack');
+            $table->integer('defense');
+            $table->text('description')->nullable();
+            $table->string('image_url')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('monsters');
+    }
+};
+
+
+
+database/seeders/MonsterSeeder.php :
+
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Monster;
+
+class MonsterSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // Mapping from old type_id to type name
+        $types = [
+            1 => 'Aquatique',
+            2 => 'Terrestre',
+            3 => 'Volant',
+            4 => 'Cosmique',
+            5 => 'Spectral',
+            6 => 'Légendaire',
+        ];
+
+        $monsters = [
+            [
+                'name' => 'AquaDragon',
+                'type_id' => 1,
+                'pv' => 150,
+                'attack' => 100,
+                'defense' => 140,
+                'image_url' => 'aquadragon.png',
+                'description' => 'Un dragon aquatique légendaire.',
+            ],
+            [
+                'name' => 'TerraWolf',
+                'type_id' => 2,
+                'pv' => 120,
+                'attack' => 80,
+                'defense' => 137,
+                'image_url' => 'terrawolf.png',
+                'description' => 'Un loup terrestre féroce.',
+            ],
+            [
+                'name' => 'SkyEagle',
+                'type_id' => 3,
+                'pv' => 100,
+                'attack' => 70,
+                'defense' => 116,
+                'image_url' => 'skyeagle.png',
+                'description' => 'Un aigle majestueux volant haut dans le ciel.',
+            ],
+            [
+                'name' => 'CosmoSerpent',
+                'type_id' => 4,
+                'pv' => 130,
+                'attack' => 90,
+                'defense' => 119,
+                'image_url' => 'cosmoserpent.png',
+                'description' => 'Un serpent cosmique mystérieux.',
+            ],
+            [
+                'name' => 'GhostPhantom',
+                'type_id' => 5,
+                'pv' => 110,
+                'attack' => 60,
+                'defense' => 97,
+                'image_url' => 'ghostphantom.png',
+                'description' => 'Un fantôme spectral énigmatique.',
+            ],
+            [
+                'name' => 'LavaGiant',
+                'type_id' => 2,
+                'pv' => 140,
+                'attack' => 95,
+                'defense' => 80,
+                'image_url' => 'lavagiant.png',
+                'description' => 'Un géant de lave indestructible.',
+            ],
+            [
+                'name' => 'IcePixie',
+                'type_id' => 3,
+                'pv' => 90,
+                'attack' => 65,
+                'defense' => 59,
+                'image_url' => 'icepixie.png',
+                'description' => 'Un pixie de glace charmant.',
+            ],
+            [
+                'name' => 'StormRider',
+                'type_id' => 3,
+                'pv' => 115,
+                'attack' => 75,
+                'defense' => 105,
+                'image_url' => 'stormrider.png',
+                'description' => 'Un cavalier tempétueux.',
+            ],
+            [
+                'name' => 'RockGolem',
+                'type_id' => 2,
+                'pv' => 135,
+                'attack' => 85,
+                'defense' => 100,
+                'image_url' => 'rockgolem.png',
+                'description' => 'Un golem de roche solide.',
+            ],
+            [
+                'name' => 'FlameSprite',
+                'type_id' => 1,
+                'pv' => 105,
+                'attack' => 55,
+                'defense' => 136,
+                'image_url' => 'flamesprite.png',
+                'description' => 'Un esprit de flamme vif.',
+            ],
+            // 👉 you can continue adding the rest later (structure stays the same)
+        ];
+
+        foreach ($monsters as $monster) {
+            Monster::create([
+                'name' => $monster['name'],
+                'type' => $types[$monster['type_id']] ?? 'Unknown',
+                'pv' => $monster['pv'],
+                'attack' => $monster['attack'],
+                'defense' => $monster['defense'],
+                'description' => $monster['description'],
+                'image_url' => $monster['image_url'],
+            ]);
+        }
+    }
+}
+
+
+
+
+database/seeders/DatabaseSeeder.php :
+
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    use WithoutModelEvents;
+
+    /**
+     * Seed the application's database.
+     */
+    
+    public function run(): void
+    {
+        // User::factory(10)->create();
+
+        User::factory()->create([
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+        ]);
+
+        $this->call(MonsterSeeder::class);
+
+    }
+}
+
+
+resources/views/monsters/create.blade.php :
+
+@extends('templates.default')
+
+@section('content')
+  <div class="container mx-auto pb-12">
+    <div class="flex flex-wrap justify-center">
+      <div class="w-full">
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+          <h2 class="text-2xl font-bold mb-4 text-center creepster">
+            Ajouter un monstre
+          </h2>
+
+          @if ($errors->any())
+            <div class="mb-4 bg-red-900/40 border border-red-500/40 rounded p-4">
+              <ul class="list-disc list-inside text-red-200">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          <form class="space-y-6" method="POST" action="{{ route('monsters.store') }}">
+            @csrf
+
+            <div>
+              <label for="name" class="block mb-1">Nom *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value="{{ old('name') }}"
+                class="w-full border rounded px-3 py-2 text-gray-700"
+                placeholder="Nom du Monstre"
+                required
+              />
+            </div>
+
+            <div>
+              <label for="type" class="block mb-1">Type *</label>
+              <select
+                id="type"
+                name="type"
+                class="w-full border rounded px-3 py-2 text-gray-700"
+                required
+              >
+                <option value="">Choisir un type</option>
+                @foreach (['Aquatique','Terrestre','Volant','Cosmique','Spectral','Légendaire'] as $t)
+                  <option value="{{ $t }}" @selected(old('type') === $t)>{{ $t }}</option>
+                @endforeach
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label for="pv" class="block mb-1">PV *</label>
+                <input type="number" id="pv" name="pv" min="0" value="{{ old('pv', 0) }}"
+                       class="w-full border rounded px-3 py-2 text-gray-700" required />
+              </div>
+
+              <div>
+                <label for="attack" class="block mb-1">Attaque *</label>
+                <input type="number" id="attack" name="attack" min="0" value="{{ old('attack', 0) }}"
+                       class="w-full border rounded px-3 py-2 text-gray-700" required />
+              </div>
+
+              <div>
+                <label for="defense" class="block mb-1">Défense *</label>
+                <input type="number" id="defense" name="defense" min="0" value="{{ old('defense', 0) }}"
+                       class="w-full border rounded px-3 py-2 text-gray-700" required />
+              </div>
+            </div>
+
+            <div>
+              <label for="image_url" class="block mb-1">Image (filename) (optionnel)</label>
+              <input
+                type="text"
+                id="image_url"
+                name="image_url"
+                value="{{ old('image_url') }}"
+                class="w-full border rounded px-3 py-2 text-gray-700"
+                placeholder="ex: aquadragon.png"
+              />
+            </div>
+
+            <div>
+              <label for="description" class="block mb-1">Description (optionnel)</label>
+              <textarea
+                id="description"
+                name="description"
+                class="w-full border rounded px-3 py-2 text-gray-700"
+                rows="4"
+                placeholder="Description du monstre..."
+              >{{ old('description') }}</textarea>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <button type="submit"
+                      class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Ajouter
+              </button>
+
+              <a href="{{ route('monsters.index') }}" class="text-red-400 hover:text-red-500">
+                Annuler
+              </a>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+@endsection
+
+
+resources/views/monsters/edit.blade.php :
+
+@extends('templates.default')
+
+@section('content')
+  <div class="container mx-auto pb-12">
+    <div class="flex flex-wrap justify-center">
+      <div class="w-full">
+        <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+          <h2 class="text-2xl font-bold mb-4 text-center creepster">
+            Modifier le monstre
+          </h2>
+
+          @if ($errors->any())
+            <div class="mb-4 bg-red-900/40 border border-red-500/40 rounded p-4">
+              <ul class="list-disc list-inside text-red-200">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+
+          <form class="space-y-6" method="POST" action="{{ route('monsters.update', $monster) }}">
+            @csrf
+            @method('PUT')
+
+            <div>
+              <label for="name" class="block mb-1">Nom *</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value="{{ old('name', $monster->name) }}"
+                class="w-full border rounded px-3 py-2 text-gray-700"
+                required
+              />
+            </div>
+
+            <div>
+              <label for="type" class="block mb-1">Type *</label>
+              <select
+                id="type"
+                name="type"
+                class="w-full border rounded px-3 py-2 text-gray-700"
+                required
+              >
+                @foreach (['Aquatique','Terrestre','Volant','Cosmique','Spectral','Légendaire'] as $t)
+                  <option value="{{ $t }}" @selected(old('type', $monster->type) === $t)>{{ $t }}</option>
+                @endforeach
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label for="pv" class="block mb-1">PV *</label>
+                <input type="number" id="pv" name="pv" min="0"
+                       value="{{ old('pv', $monster->pv) }}"
+                       class="w-full border rounded px-3 py-2 text-gray-700" required />
+              </div>
+
+              <div>
+                <label for="attack" class="block mb-1">Attaque *</label>
+                <input type="number" id="attack" name="attack" min="0"
+                       value="{{ old('attack', $monster->attack) }}"
+                       class="w-full border rounded px-3 py-2 text-gray-700" required />
+              </div>
+
+              <div>
+                <label for="defense" class="block mb-1">Défense *</label>
+                <input type="number" id="defense" name="defense" min="0"
+                       value="{{ old('defense', $monster->defense) }}"
+                       class="w-full border rounded px-3 py-2 text-gray-700" required />
+              </div>
+            </div>
+
+            <div>
+              <label for="image_url" class="block mb-1">Image (filename) (optionnel)</label>
+              <input
+                type="text"
+                id="image_url"
+                name="image_url"
+                value="{{ old('image_url', $monster->image_url) }}"
+                class="w-full border rounded px-3 py-2 text-gray-700"
+              />
+            </div>
+
+            <div>
+              <label for="description" class="block mb-1">Description (optionnel)</label>
+              <textarea
+                id="description"
+                name="description"
+                class="w-full border rounded px-3 py-2 text-gray-700"
+                rows="4"
+              >{{ old('description', $monster->description) }}</textarea>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <button type="submit"
+                      class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Enregistrer
+              </button>
+
+              <a href="{{ route('monsters.show', $monster) }}" class="text-red-400 hover:text-red-500">
+                Annuler
+              </a>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+@endsection
+
+
+
+resources/views/monsters/index.blade.php :
+
+@extends('templates.default')
+
+@section('content')
+  <div class="container mx-auto pb-12">
+
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold creepster">Les 9 derniers monstres</h2>
+      <a href="{{ route('monsters.create') }}"
+         class="text-white bg-red-500 hover:bg-red-700 rounded-full px-4 py-2 transition-colors duration-300">
+        Ajouter un monstre
+      </a>
+    </div>
+
+    @if($monsters->isEmpty())
+      <p class="text-gray-300">Aucun monstre pour le moment.</p>
+    @else
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach($monsters as $monster)
+          <article class="relative bg-gray-700 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 monster-card" data-monster-type="{{ strtolower($monster->type) }}">
+            <img class="w-full h-48 object-cover rounded-t-lg"
+                 src="{{ $monster->image_url ? asset('images/'.$monster->image_url) : asset('images/placeholder.png') }}"
+                 alt="{{ $monster->name }}" />
+
+            <div class="p-4">
+              <h3 class="text-xl font-bold">{{ $monster->name }}</h3>
+
+              <p class="text-gray-300 text-sm mb-2">
+                {{ \Illuminate\Support\Str::limit($monster->description, 80) }}
+              </p>
+
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-300">Type: {{ $monster->type }}</span>
+              </div>
+
+              <div class="flex justify-between items-center mb-4">
+                <span class="text-sm text-gray-300">PV: {{ $monster->pv }}</span>
+                <span class="text-sm text-gray-300">Attaque: {{ $monster->attack }}</span>
+              </div>
+
+              <div class="text-center">
+                <a href="{{ route('monsters.show', $monster) }}"
+                   class="inline-block text-white bg-red-500 hover:bg-red-700 rounded-full px-4 py-2 transition-colors duration-300">
+                  Plus de détails
+                </a>
+              </div>
+            </div>
+          </article>
+        @endforeach
+      </div>
+    @endif
+
+  </div>
+@endsection
+
+
+resources/views/monsters/show.blade.php :
+
+@extends('templates.default')
+
+@section('content')
+  <div class="container mx-auto flex flex-wrap pb-12">
+    <section class="w-full">
+
+      <section class="mb-10">
+        <div class="bg-gray-700 rounded-lg shadow-lg monster-card" data-monster-type="{{ strtolower($monster->type) }}">
+          <div class="md:flex">
+
+            <div class="w-full md:w-1/2 relative">
+              <img
+                class="w-full h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-t-none"
+                src="{{ $monster->image_url ? asset('images/'.$monster->image_url) : asset('images/placeholder.png') }}"
+                alt="{{ $monster->name }}"
+              />
+            </div>
+
+            <div class="p-6 md:w-1/2">
+              <h2 class="text-3xl font-bold mb-2 creepster">{{ $monster->name }}</h2>
+
+              <p class="text-gray-300 text-sm mb-4">
+                {{ $monster->description }}
+              </p>
+
+              <div class="mb-6">
+                <div><strong class="text-white">Type:</strong> <span class="text-gray-300">{{ $monster->type }}</span></div>
+                <div><strong class="text-white">PV:</strong> <span class="text-gray-300">{{ $monster->pv }}</span></div>
+                <div><strong class="text-white">Attaque:</strong> <span class="text-gray-300">{{ $monster->attack }}</span></div>
+                <div><strong class="text-white">Défense:</strong> <span class="text-gray-300">{{ $monster->defense }}</span></div>
+              </div>
+
+              <div class="flex flex-wrap gap-3">
+                <a href="{{ route('monsters.edit', $monster) }}"
+                   class="inline-block text-white bg-red-500 hover:bg-red-700 rounded-full px-4 py-2 transition-colors duration-300">
+                  Modifier
+                </a>
+
+                <form action="{{ route('monsters.destroy', $monster) }}" method="POST" onsubmit="return confirm('Supprimer ce monstre ?');">
+                  @csrf
+                  @method('DELETE')
+                  <button
+                    type="submit"
+                    class="inline-block text-white opacity-80 hover:opacity-100 rounded-full px-4 py-2 transition-colors duration-300 border border-white/20"
+                  >
+                    Supprimer
+                  </button>
+                </form>
+
+                <a href="{{ route('monsters.index') }}"
+                   class="inline-block text-gray-300 hover:text-white rounded-full px-4 py-2 transition-colors duration-300">
+                  Retour
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </section>
+  </div>
+@endsection
+
+
+resources/views/templates/partials/_nav.blade.php :
+
+<nav
+        class="container mx-auto px-4 py-4 mb-16 flex justify-between items-center"
+      >
+        <div class="flex items-center">
+          <a href="{{ route('home') }}">
+            <img
+              src="{{ asset('images/Logo_RetroMonsters.png') }}"
+              alt="RetroMonsters Logo"
+              class="h-32 mr-3 absolute"
+              style="top: -28px"
+            />
+          </a>
+          <a href="#" class="text-white font-bold text-xl hidden"
+            >RetroMonsters</a
+          >
+        </div>
+
+        <button @click="open = !open" class="text-white md:hidden">
+          <i class="fa fa-bars"></i>
+        </button>
+
+        <div class="hidden md:flex items-center">
+          <a
+            class="text-gray-300 hover:text-white px-3 py-2 hover:bg-gray-700"
+            href="{{ route('monsters.index') }}"
+            >Monstres</a
+          >
+          <a
+            class="text-gray-300 hover:text-white px-3 py-2 hover:bg-gray-700 active"
+            href="{{ route('monsters.create') }}"
+            >Ajouter un monstre</a
+          >
+          <!-- <a
+            class="text-gray-300 hover:text-white px-3 py-2 hover:bg-gray-700"
+            href="#"
+            >Créateurs</a
+          > -->
+          <!-- <a
+            class="text-gray-300 hover:text-white px-3 py-2 hover:bg-gray-700"
+            href="#"
+            >Se connecter</a
+          > -->
+
+          <!-- Utilisation d'un bouton pour ouvrir le menu déroulant de l'utilisateur -->
+          <!-- <div class="relative" x-data="{ userMenuOpen: false }">
+            <button @click="userMenuOpen = !userMenuOpen" class="text-white">
+              <img src="images/user.webp" alt="" class="w-16" />
+            </button>
+
+            <div
+              x-show="userMenuOpen"
+              @click.away="userMenuOpen = false"
+              class="absolute right-0 mt-2 w-48 bg-gray-100 rounded-md shadow-lg pb-1 z-50"
+            >
+              <div class="text-gray-200 px-4 py-2 bg-gray-400 text-center">
+                Username
+              </div>
+              <a
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                >Mon Profil</a
+              >
+              <a
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                >Mon Deck</a
+              >
+              <a
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                >Ajouter un Monstre</a
+              >
+              <a
+                href="#"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-200"
+                >Se Déconnecter</a
+              >
+            </div>
+          </div> -->
+        </div>
+      </nav>
+
+      <!-- Menu pour mobile -->
+      <div x-show="open" class="md:hidden p-8">
+        <a
+          class="block bg-gray-900 text-white px-4 py-2 hover:bg-gray-700"
+          href="#"
+          >Monstres</a
+        >
+        <a
+          class="block bg-gray-900 text-white px-4 py-2 hover:bg-gray-700"
+          href="#"
+          >Ajouter un monstre</a
+        >
+        <!-- <a
+          class="block bg-gray-900 text-white px-4 py-2 hover:bg-gray-700"
+          href="#"
+          >Se connecter</a
+        >
+        <a
+          class="block bg-gray-900 text-white px-4 py-2 hover:bg-gray-700"
+          href="#"
+          >Mon Profil</a
+        >
+        <a
+          class="block bg-gray-900 text-white px-4 py-2 hover:bg-gray-700"
+          href="#"
+          >Mon Deck</a
+        >
+        <a
+          class="block bg-gray-900 text-white px-4 py-2 hover:bg-gray-700"
+          href="#"
+          >Ajouter un Monstre</a
+        >
+        <a
+          class="block bg-gray-900 text-white px-4 py-2 hover:bg-gray-700"
+          href="#"
+          >Se Déconnecter</a
+        > -->
+      </div>
+
+
+resources/views/templates/default.blade.php :
+
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        @include('templates.partials._head')
+    </head>
+    
+    <body class="bg-gray-800 text-white font-sans">
+
+        <header class="bg-gray-900 shadow-lg relative top-8" x-data="{ open: false, loggedIn: true, userMenuOpen: false }">
+                @include('templates.partials._header')
+        </header>
+
+        @include('templates.partials._main')
+
+        <footer>
+            @include('templates.partials._footer')
+        </footer>
+    </body>
+</html>
+
+resources/views/home.blade.php :
+
+@extends('templates.default')
+
+@section('content')
+  <div class="container mx-auto pb-12">
+
+    {{-- Random monster (if DB not empty) --}}
+    @if($randomMonster)
+      <section class="mb-20">
+        <h2 class="text-2xl font-bold mb-4 creepster">Monstre aléatoire</h2>
+
+        <div class="bg-gray-700 rounded-lg shadow-lg monster-card" data-monster-type="{{ strtolower($randomMonster->type) }}">
+          <div class="md:flex">
+            <div class="w-full md:w-1/2 relative">
+              <img
+                class="w-full h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-t-none"
+                src="{{ $randomMonster->image_url ? asset('images/'.$randomMonster->image_url) : asset('images/placeholder.png') }}"
+                alt="{{ $randomMonster->name }}"
+              />
+            </div>
+
+            <div class="p-6 md:w-1/2">
+              <h2 class="text-3xl font-bold mb-2 creepster">{{ $randomMonster->name }}</h2>
+
+              <p class="text-gray-300 text-sm mb-4">
+                {{ $randomMonster->description }}
+              </p>
+
+              <div class="mb-4">
+                <div><strong class="text-white">Type:</strong> <span class="text-gray-300">{{ $randomMonster->type }}</span></div>
+                <div><strong class="text-white">PV:</strong> <span class="text-gray-300">{{ $randomMonster->pv }}</span></div>
+                <div><strong class="text-white">Attaque:</strong> <span class="text-gray-300">{{ $randomMonster->attack }}</span></div>
+                <div><strong class="text-white">Défense:</strong> <span class="text-gray-300">{{ $randomMonster->defense }}</span></div>
+              </div>
+
+              <a
+                href="{{ route('monsters.show', $randomMonster) }}"
+                class="inline-block text-white bg-red-500 hover:bg-red-700 rounded-full px-4 py-2 transition-colors duration-300"
+              >
+                Plus de détails
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    @endif
+
+    {{-- Latest monsters --}}
+    <section class="mb-20">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold creepster">Derniers monstres ajoutés</h2>
+        <a href="{{ route('monsters.create') }}" class="text-white bg-red-500 hover:bg-red-700 rounded-full px-4 py-2 transition-colors duration-300">
+          Ajouter un monstre
+        </a>
+      </div>
+
+      @if($latestMonsters->isEmpty())
+        <p class="text-gray-300">Aucun monstre pour le moment.</p>
+      @else
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @foreach($latestMonsters as $monster)
+            <article class="relative bg-gray-700 rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-300 monster-card" data-monster-type="{{ strtolower($monster->type) }}">
+              <img class="w-full h-48 object-cover rounded-t-lg"
+                   src="{{ $monster->image_url ? asset('images/'.$monster->image_url) : asset('images/placeholder.png') }}"
+                   alt="{{ $monster->name }}" />
+
+              <div class="p-4">
+                <h3 class="text-xl font-bold">{{ $monster->name }}</h3>
+
+                <p class="text-gray-300 text-sm mb-2">
+                  {{ \Illuminate\Support\Str::limit($monster->description, 80) }}
+                </p>
+
+                <div class="flex justify-between items-center mb-2">
+                  <span class="text-sm text-gray-300">Type: {{ $monster->type }}</span>
+                </div>
+
+                <div class="flex justify-between items-center mb-4">
+                  <span class="text-sm text-gray-300">PV: {{ $monster->pv }}</span>
+                  <span class="text-sm text-gray-300">Attaque: {{ $monster->attack }}</span>
+                </div>
+
+                <div class="text-center">
+                  <a href="{{ route('monsters.show', $monster) }}"
+                     class="inline-block text-white bg-red-500 hover:bg-red-700 rounded-full px-4 py-2 transition-colors duration-300">
+                    Plus de détails
+                  </a>
+                </div>
+              </div>
+            </article>
+          @endforeach
+        </div>
+      @endif
+    </section>
+  </div>
+@endsection
+
+
+routes/web.php :
+
+<?php
+
+use App\Http\Controllers\MonsterController;
+use Illuminate\Support\Facades\Route;
+
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+
+
+Route::get('/', [MonsterController::class, 'home'])->name('home');
+Route::resource('monsters', MonsterController::class);
