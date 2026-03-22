@@ -24,3 +24,4 @@ Homestead.yaml
 Thumbs.db
 
 Render_Environment-Variables_evaluation_first-session_2026.env
+*.env
